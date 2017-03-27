@@ -483,7 +483,7 @@ module Kramdown
       private
 
       def html_attributes_with_default(attr, element_value)
-        default_css_class = Html.default_css_classes[element_value]
+        default_css_class = Html.default_css_classes[element_value.to_s]
         return html_attributes(attr) unless default_css_class
 
         css_class = ((attr['class'] || '').split(' ') + default_css_class.split(' ')).join(' ')
