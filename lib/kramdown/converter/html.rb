@@ -35,6 +35,21 @@ module Kramdown
       # The amount of indentation used when nesting HTML tags.
       attr_accessor :indent
 
+      # set default CSS classes each element
+      #
+      # example:
+      #   Kramdown::Converter::Html.default_css_classes = {
+      #     'h1' => 'md-h1-header',
+      #     'table' => 'md-table'
+      #  }
+      def self.default_css_classes=(value)
+        @default_css_classes = value
+      end
+
+      def self.default_css_classes
+        @default_css_classes || {}
+      end
+
       # Initialize the HTML converter with the given Kramdown document +doc+.
       def initialize(root, options)
         super
@@ -97,7 +112,7 @@ module Kramdown
 
         if highlighted_code
           add_syntax_highlighter_to_class_attr(attr, lang || hl_opts[:default_lang])
-          "#{' '*indent}<div#{html_attributes(attr)}>#{highlighted_code}#{' '*indent}</div>\n"
+          "#{' '*indent}<div#{html_attributes_with_default(attr, 'div')}>#{highlighted_code}#{' '*indent}</div>\n"
         else
           result = escape_html(el.value)
           result.chomp!
@@ -114,7 +129,7 @@ module Kramdown
           end
           code_attr = {}
           code_attr['class'] = "language-#{lang}" if lang
-          "#{' '*indent}<pre#{html_attributes(attr)}><code#{html_attributes(code_attr)}>#{result}\n</code></pre>\n"
+          "#{' '*indent}<pre#{html_attributes_with_default(attr, 'pre')}><code#{html_attributes_with_default(code_attr, 'code')}>#{result}\n</code></pre>\n"
         end
       end
 
@@ -133,7 +148,7 @@ module Kramdown
       end
 
       def convert_hr(el, indent)
-        "#{' '*indent}<hr#{html_attributes(el.attr)} />\n"
+        "#{' '*indent}<hr#{html_attributes_with_default(el.attr, 'hr')} />\n"
       end
 
       def convert_ul(el, indent)
@@ -153,7 +168,7 @@ module Kramdown
       end
 
       def convert_li(el, indent)
-        output = ' '*indent << "<#{el.type}" << html_attributes(el.attr) << ">"
+        output = ' '*indent << "<#{el.type}" << html_attributes_with_default(el.attr, el.type) << ">"
         res = inner(el, indent)
         if el.children.empty? || (el.children.first.type == :p && el.children.first.options[:transparent])
           output << res << (res =~ /\n\Z/ ? ' '*indent : '')
@@ -178,11 +193,11 @@ module Kramdown
       def convert_html_element(el, indent)
         res = inner(el, indent)
         if el.options[:category] == :span
-          "<#{el.value}#{html_attributes(el.attr)}" << (res.empty? && HTML_ELEMENTS_WITHOUT_BODY.include?(el.value) ? " />" : ">#{res}</#{el.value}>")
+          "<#{el.value}#{html_attributes_with_default(el.attr, el.value)}" << (res.empty? && HTML_ELEMENTS_WITHOUT_BODY.include?(el.value) ? " />" : ">#{res}</#{el.value}>")
         else
           output = ''
           output << ' '*indent if @stack.last.type != :html_element || @stack.last.options[:content_model] != :raw
-          output << "<#{el.value}#{html_attributes(el.attr)}"
+          output << "<#{el.value}#{html_attributes_with_default(el.attr, el.value)}"
           if el.options[:is_closed] && el.options[:content_model] == :raw
             output << " />"
           elsif !res.empty? && el.options[:content_model] != :block
@@ -247,7 +262,7 @@ module Kramdown
       end
 
       def convert_img(el, indent)
-        "<img#{html_attributes(el.attr)} />"
+        "<img#{html_attributes_with_default(el.attr, 'img')} />"
       end
 
       def convert_codespan(el, indent)
@@ -354,18 +369,18 @@ module Kramdown
 
       # Format the given element as span HTML.
       def format_as_span_html(name, attr, body)
-        "<#{name}#{html_attributes(attr)}>#{body}</#{name}>"
+        "<#{name}#{html_attributes_with_default(attr, name)}>#{body}</#{name}>"
       end
 
       # Format the given element as block HTML.
       def format_as_block_html(name, attr, body, indent)
-        "#{' '*indent}<#{name}#{html_attributes(attr)}>#{body}</#{name}>\n"
+        "#{' '*indent}<#{name}#{html_attributes_with_default(attr, name)}>#{body}</#{name}>\n"
       end
 
       # Format the given element as block HTML with a newline after the start tag and indentation
       # before the end tag.
       def format_as_indented_block_html(name, attr, body, indent)
-        "#{' '*indent}<#{name}#{html_attributes(attr)}>\n#{body}#{' '*indent}</#{name}>\n"
+        "#{' '*indent}<#{name}#{html_attributes_with_default(attr, name)}>\n#{body}#{' '*indent}</#{name}>\n"
       end
 
       # Add the syntax highlighter name to the 'class' attribute of the given attribute hash. And
@@ -465,6 +480,15 @@ module Kramdown
         (ol.children.empty? ? '' : format_as_indented_block_html('div', {:class => "footnotes"}, convert(ol, 2), 0))
       end
 
+      private
+
+      def html_attributes_with_default(attr, element_value)
+        default_css_class = Html.default_css_classes[element_value]
+        return html_attributes(attr) unless default_css_class
+
+        css_class = ((attr['class'] || '').split(' ') + default_css_class.split(' ')).join(' ')
+        html_attributes(attr.merge('class' => css_class))
+      end
     end
 
   end
