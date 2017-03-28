@@ -13,7 +13,7 @@ module Kramdown::Converter::MathEngine
   module MathjaxNode
 
     # MathjaxNode is available if this constant is +true+.
-    AVAILABLE = RUBY_VERSION >= '1.9' && begin
+    AVAILABLE = begin
       %x{node --version}[1..-2] >= '4.0'
     rescue
       begin

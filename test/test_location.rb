@@ -11,7 +11,7 @@
 require 'minitest/autorun'
 require 'kramdown'
 
-Encoding.default_external = 'utf-8' if RUBY_VERSION >= '1.9'
+Encoding.default_external = 'utf-8'
 
 describe 'location' do
 

@@ -34,14 +34,11 @@ begin
 rescue LoadError, SyntaxError, NameError
 end
 
-Encoding.default_external = 'utf-8' if RUBY_VERSION >= '1.9'
+Encoding.default_external = 'utf-8'
 
 class TestFiles < Minitest::Test
 
-  EXCLUDE_KD_FILES = [('test/testcases/block/04_header/with_auto_ids.text' if RUBY_VERSION <= '1.8.6'), # bc of dep stringex not working
-                      ('test/testcases/span/03_codespan/rouge/' if RUBY_VERSION < '2.0'), #bc of rouge
-                      ('test/testcases/block/06_codeblock/rouge/' if RUBY_VERSION < '2.0'), #bc of rouge
-                      ('test/testcases/block/15_math/itex2mml.text' if RUBY_PLATFORM == 'java'), # bc of itextomml
+  EXCLUDE_KD_FILES = [('test/testcases/block/15_math/itex2mml.text' if RUBY_PLATFORM == 'java'), # bc of itextomml
                       ('test/testcases/span/math/itex2mml.text' if RUBY_PLATFORM == 'java'), # bc of itextomml
                      ].compact
 
@@ -51,8 +48,7 @@ class TestFiles < Minitest::Test
     basename = text_file.sub(/\.text$/, '')
     opts_file = text_file.sub(/\.text$/, '.options')
     (Dir[basename + ".*"] - [text_file, opts_file]).each do |output_file|
-      next if (RUBY_VERSION >= '1.9' && File.exist?(output_file + '.19')) ||
-        (RUBY_VERSION < '1.9' && output_file =~ /\.19$/)
+      next if File.exist?(output_file + '.19')
       output_format = File.extname(output_file.sub(/\.19$/, ''))[1..-1]
       next if !Kramdown::Converter.const_defined?(output_format[0..0].upcase + output_format[1..-1])
       define_method('test_' + text_file.tr('.', '_') + "_to_#{output_format}") do
@@ -76,8 +72,6 @@ class TestFiles < Minitest::Test
                           'test/testcases/block/04_header/header_type_offset.html', # bc of header_offset option
                           'test/testcases/block/06_codeblock/rouge/simple.html', # bc of double surrounding <div>
                           'test/testcases/block/06_codeblock/rouge/multiple.html', # bc of double surrounding <div>
-                          ('test/testcases/span/03_codespan/rouge/simple.html' if RUBY_VERSION < '2.0'),
-                          ('test/testcases/span/03_codespan/rouge/disabled.html' if RUBY_VERSION < '2.0'),
                           'test/testcases/block/15_math/ritex.html', # bc of tidy
                           'test/testcases/span/math/ritex.html', # bc of tidy
                           'test/testcases/block/15_math/itex2mml.html', # bc of tidy
@@ -98,8 +92,7 @@ class TestFiles < Minitest::Test
                               ].compact
     Dir[File.dirname(__FILE__) + '/testcases/**/*.{html,html.19,htmlinput,htmlinput.19}'].each do |html_file|
       next if EXCLUDE_HTML_FILES.any? {|f| html_file =~ /#{f}(\.19)?$/}
-      next if (RUBY_VERSION >= '1.9' && File.exist?(html_file + '.19')) ||
-        (RUBY_VERSION < '1.9' && html_file =~ /\.19$/)
+      next if File.exist?(html_file + '.19')
 
       out_files = []
       out_files << [(html_file =~ /\.htmlinput(\.19)?$/ ? html_file.sub(/input(\.19)?$/, '') : html_file), :to_html]
@@ -123,7 +116,7 @@ class TestFiles < Minitest::Test
   end
 
   def tidy_output(out)
-    cmd = "tidy -q --doctype omit #{RUBY_VERSION >= '1.9' ? '-utf8' : '-raw'} 2>/dev/null"
+    cmd = "tidy -q --doctype omit -utf8 2>/dev/null"
     result = IO.popen(cmd, 'r+') do |io|
       io.write(out)
       io.close_write
@@ -182,9 +175,6 @@ class TestFiles < Minitest::Test
                           'test/testcases/block/11_ial/simple.text',         # bc of change of ordering of attributes in header
                           'test/testcases/span/extension/comment.text',      # bc of comment text modifications (can this be avoided?)
                           'test/testcases/block/04_header/header_type_offset.text', # bc of header_offset being applied twice
-                          ('test/testcases/block/04_header/with_auto_ids.text' if RUBY_VERSION <= '1.8.6'), # bc of dep stringex not working
-                          ('test/testcases/span/03_codespan/rouge/simple.text' if RUBY_VERSION < '2.0'), #bc of rouge
-                          ('test/testcases/span/03_codespan/rouge/disabled.text' if RUBY_VERSION < '2.0'), #bc of rouge
                           'test/testcases/block/06_codeblock/rouge/simple.text',
                           'test/testcases/block/06_codeblock/rouge/multiple.text', # check, what document contain more, than one code block
                           'test/testcases/block/15_math/ritex.text', # bc of tidy
@@ -203,7 +193,7 @@ class TestFiles < Minitest::Test
     Dir[File.dirname(__FILE__) + '/testcases/**/*.text'].each do |text_file|
       next if EXCLUDE_TEXT_FILES.any? {|f| text_file =~ /#{f}$/}
       html_file = text_file.sub(/\.text$/, '.html')
-      html_file += '.19' if RUBY_VERSION >= '1.9' && File.exist?(html_file + '.19')
+      html_file += '.19' if File.exist?(html_file + '.19')
       next unless File.exist?(html_file)
       define_method('test_' + text_file.tr('.', '_') + "_to_kramdown_to_html") do
         opts_file = text_file.sub(/\.text$/, '.options')
@@ -236,8 +226,6 @@ class TestFiles < Minitest::Test
                              'test/testcases/block/04_header/header_type_offset.html', # bc of header_offset option
                              'test/testcases/block/16_toc/toc_exclude.html',      # bc of different attribute ordering
                              'test/testcases/span/autolinks/url_links.html',      # bc of quot entity being converted to char
-                             ('test/testcases/span/03_codespan/rouge/simple.html' if RUBY_VERSION < '2.0'),
-                             ('test/testcases/span/03_codespan/rouge/disabled.html' if RUBY_VERSION < '2.0'),
                              'test/testcases/block/15_math/ritex.html', # bc of tidy
                              'test/testcases/span/math/ritex.html', # bc of tidy
                              'test/testcases/block/15_math/itex2mml.html', # bc of tidy
@@ -256,8 +244,7 @@ class TestFiles < Minitest::Test
                             ].compact
     Dir[File.dirname(__FILE__) + '/testcases/**/*.{html,html.19}'].each do |html_file|
       next if EXCLUDE_HTML_KD_FILES.any? {|f| html_file =~ /#{f}(\.19)?$/}
-      next if (RUBY_VERSION >= '1.9' && File.exist?(html_file + '.19')) ||
-        (RUBY_VERSION < '1.9' && html_file =~ /\.19$/)
+      next if File.exist?(html_file + '.19')
       define_method('test_' + html_file.tr('.', '_') + "_to_kramdown_to_html") do
         kd = Kramdown::Document.new(File.read(html_file), :input => 'html', :auto_ids => false, :footnote_nr => 1).to_kramdown
         opts_file = html_file.sub(/\.html(\.19)?$/, '.options')
@@ -339,11 +326,6 @@ class TestFiles < Minitest::Test
                        'test/testcases/span/text_substitutions/entities_as_char.text',
                        'test/testcases/span/text_substitutions/entities.text',
                        'test/testcases/span/text_substitutions/typography.text',
-                       ('test/testcases/span/03_codespan/rouge/simple.text' if RUBY_VERSION < '2.0'),
-                       ('test/testcases/span/03_codespan/rouge/disabled.text' if RUBY_VERSION < '2.0'),
-                       ('test/testcases/block/06_codeblock/rouge/simple.text' if RUBY_VERSION < '2.0'), #bc of rouge
-                       ('test/testcases/block/06_codeblock/rouge/disabled.text' if RUBY_VERSION < '2.0'), #bc of rouge
-                       ('test/testcases/block/06_codeblock/rouge/multiple.text' if RUBY_VERSION < '2.0'), #bc of rouge
                        ('test/testcases/block/15_math/itex2mml.text' if RUBY_PLATFORM == 'java'), # bc of itextomml
                        ('test/testcases/span/math/itex2mml.text' if RUBY_PLATFORM == 'java'), # bc of itextomml
                       ].compact
@@ -353,7 +335,7 @@ class TestFiles < Minitest::Test
     next if EXCLUDE_GFM_FILES.any? {|f| text_file =~ /#{f}$/}
     basename = text_file.sub(/\.text$/, '')
 
-    html_file = [(".html.19" if RUBY_VERSION >= '1.9'), ".html"].compact.
+    html_file = [".html.19", ".html"].
       map {|ext| basename + ext }.
       detect {|file| File.exist?(file) }
     next unless html_file
@@ -385,7 +367,7 @@ class TestFiles < Minitest::Test
     options = File.exist?(opts_file) ? YAML::load(File.read(opts_file)) : {:auto_ids => false, :footnote_nr => 1}
     (Kramdown::Converter.constants.map {|c| c.to_sym} - [:Base, :RemoveHtmlTags, :MathEngine, :SyntaxHighlighter]).each do |conv_class|
       next if EXCLUDE_MODIFY.any? {|f| text_file =~ /#{f}$/}
-      next if conv_class == :Pdf && (RUBY_VERSION < '2.0' || EXCLUDE_PDF_MODIFY.any? {|f| text_file =~ /#{f}$/})
+      next if conv_class == :Pdf && EXCLUDE_PDF_MODIFY.any? {|f| text_file =~ /#{f}$/}
       define_method("test_whether_#{conv_class}_modifies_tree_with_file_#{text_file.tr('.', '_')}") do
         doc = Kramdown::Document.new(File.read(text_file), options)
         options_before = Marshal.load(Marshal.dump(doc.options))

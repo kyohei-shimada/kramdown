@@ -20,12 +20,7 @@ encmap = {
 }
 %>
 \documentclass{scrartcl}
-<% if RUBY_VERSION >= '1.9' %>
 \usepackage[<%= encmap[@body.encoding.name] %>]{inputenc}
-<% else %>
-\usepackage[mathletters]{ucs}
-\usepackage[utf8x]{inputenc}
-<% end %>
 \usepackage[T1]{fontenc}
 \usepackage{listings}
 <% @converter.data[:packages].each {|pkg| %>\usepackage{<%= pkg %>}

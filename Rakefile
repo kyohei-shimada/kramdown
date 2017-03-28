@@ -13,7 +13,7 @@ rescue LoadError
 end
 
 begin
-  gem 'rdoc' if RUBY_VERSION >= '1.9'
+  gem 'rdoc'
   require 'rdoc/task'
   require 'rdoc/rdoc'
 
